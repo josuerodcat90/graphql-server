@@ -3,54 +3,69 @@ import { ApolloServer } from 'apollo-server';
 
 const persons = [
 	{
-		id: '1581f3a4-0ec7-47e0-8052-d9ed18005982',
-		name: 'Aggy Vorley',
-		phone: '(942) 9368533',
-		street: '070 Judy Place',
-		city: 'Klaeng',
+		id: '0298ad2d-b4a8-4f7b-a381-c96dd89da726',
+		name: 'Loise Ivett',
+		age: 30,
+		phone: '(379) 2114899',
+		street: '5213 Vera Center',
+		city: 'Jablonec nad Nisou',
 	},
 	{
-		id: '98ab524a-aa98-41d0-9ae8-1d2b85fdfd47',
-		name: 'Roze Abbes',
-		phone: '(660) 4216744',
-		street: '3283 Bashford Avenue',
-		city: 'Haikou',
+		id: '14d34151-9a08-48fb-bff8-166f3d9d5dc6',
+		name: 'Ines Colebeck',
+		age: 8,
+		phone: '(989) 9732428',
+		street: '11578 Bowman Park',
+		city: 'Loo',
 	},
 	{
-		id: '86952a0e-f624-409f-a743-06cae8bcbe15',
-		name: 'Clara Indgs',
-		phone: '(136) 3450159',
-		street: '7 Blackbird Alley',
-		city: 'Salogon',
+		id: 'e667f437-11b8-4f6a-8a4a-ce9b302366c5',
+		name: 'Derward Cullity',
+		age: 19,
+		phone: '(255) 1988827',
+		street: '47 Mayer Avenue',
+		city: 'Santa Maria',
 	},
 	{
-		id: '64f7da91-06e3-47fe-b76d-9b5841ebfdcc',
-		name: 'Gracia Heeron',
-		phone: '(348) 1614158',
-		street: '4032 Farmco Drive',
-		city: 'Sudogda',
+		id: '2259f33a-bc31-40cc-8541-141680b852a9',
+		name: 'Lonee Wythill',
+		age: 16,
+		phone: '(958) 2463417',
+		street: '2 Rusk Way',
+		city: 'Malahide',
 	},
 	{
-		id: '9c45b671-e834-4451-bbf4-ab710d7e49e8',
-		name: "Tadeo O' Mullane",
-		phone: '(934) 4713840',
-		street: '4 Barby Crossing',
-		city: 'Lubichowo',
+		id: 'f7fa72b0-969b-4d12-801f-226c2c1d697d',
+		name: 'Flora Cato',
+		age: 34,
+		phone: '(324) 7002749',
+		street: '979 Morrow Hill',
+		city: 'Xinglongjie',
 	},
 ];
 
 const typeDefs = gql`
+	type Address {
+		street: String!
+		city: String!
+	}
+
 	type Person {
 		id: ID!
 		name: String!
+		age: Int!
 		phone: String
 		street: String!
+		address: Address!
+		canDrink: Boolean!
+		check: String!
 		city: String
 	}
 
 	type Query {
 		personCount: Int!
 		allPersons: [Person]!
+		findPerson(name: String!): Person
 	}
 `;
 
@@ -58,6 +73,21 @@ const resolvers = {
 	Query: {
 		personCount: () => persons.length,
 		allPersons: () => persons,
+		findPerson: (root, args) => {
+			const { name } = args;
+
+			return persons.find((person) => person.name === name);
+		},
+	},
+	Person: {
+		canDrink: (person) => person.age >= 18,
+		address: (person) => {
+			return {
+				street: person.street,
+				city: person.city,
+			};
+		},
+		check: () => 'LOL',
 	},
 };
 
