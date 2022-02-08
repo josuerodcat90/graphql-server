@@ -82,6 +82,8 @@ const typeDefs = gql`
 			street: String!
 			city: String!
 		): Person!
+
+		editNumber(name: String!, phone: String!): Person!
 	}
 `;
 
@@ -133,6 +135,23 @@ const resolvers = {
 			persons.push(newPerson);
 
 			return newPerson;
+		},
+		editNumber: (root, args) => {
+			const { name, phone } = args;
+			const personIndex = persons.findIndex((person) => person.name === name);
+
+			if (personIndex === -1) {
+				throw new UserInputError('Person not found', {
+					invalidArgs: name,
+				});
+			}
+
+			const person = persons[personIndex];
+
+			const updatedPerson = { ...person, phone };
+			persons[personIndex] = updatedPerson;
+
+			return updatedPerson;
 		},
 	},
 };
