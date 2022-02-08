@@ -7,7 +7,7 @@ const persons = [
 		id: '0298ad2d-b4a8-4f7b-a381-c96dd89da726',
 		name: 'Loise Ivett',
 		age: 30,
-		phone: '(379) 2114899',
+		phone: null,
 		street: '5213 Vera Center',
 		city: 'Jablonec nad Nisou',
 	},
@@ -31,7 +31,7 @@ const persons = [
 		id: '2259f33a-bc31-40cc-8541-141680b852a9',
 		name: 'Lonee Wythill',
 		age: 16,
-		phone: '(958) 2463417',
+		phone: null,
 		street: '2 Rusk Way',
 		city: 'Malahide',
 	},
@@ -46,6 +46,11 @@ const persons = [
 ];
 
 const typeDefs = gql`
+	enum Yesno {
+		YES
+		NO
+	}
+
 	type Address {
 		street: String!
 		city: String!
@@ -65,7 +70,7 @@ const typeDefs = gql`
 
 	type Query {
 		personCount: Int!
-		allPersons: [Person]!
+		allPersons(phone: Yesno): [Person]!
 		findPerson(name: String!): Person
 	}
 
@@ -83,10 +88,16 @@ const typeDefs = gql`
 const resolvers = {
 	Query: {
 		personCount: () => persons.length,
-		allPersons: () => persons,
+		allPersons: (root, args) => {
+			if (!args.phone) return persons;
+
+			const byPhone = (person) =>
+				args.phone === 'YES' ? person.phone : !person.phone;
+
+			return persons.filter(byPhone);
+		},
 		findPerson: (root, args) => {
 			const { name } = args;
-
 			return persons.find((person) => person.name === name);
 		},
 	},
@@ -128,10 +139,6 @@ const resolvers = {
 
 const server = new ApolloServer({ typeDefs, resolvers });
 
-server
-	.listen({
-		port: process.env.PORT || 5000,
-	})
-	.then(({ url }) => {
-		console.log(`🚀 Server ready at ${url}`);
-	});
+server.listen({ port: process.env.PORT || 5000 }).then(({ url }) => {
+	console.log(`🚀 Server ready at ${url}`);
+});
