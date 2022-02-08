@@ -46,7 +46,7 @@ const persons = [
 ];
 
 const typeDefs = gql`
-	enum Yesno {
+	enum YesNo {
 		YES
 		NO
 	}
@@ -70,7 +70,7 @@ const typeDefs = gql`
 
 	type Query {
 		personCount: Int!
-		allPersons(phone: Yesno): [Person]!
+		allPersons(hasPhone: YesNo): [Person]!
 		findPerson(name: String!): Person
 	}
 
@@ -89,10 +89,10 @@ const resolvers = {
 	Query: {
 		personCount: () => persons.length,
 		allPersons: (root, args) => {
-			if (!args.phone) return persons;
+			if (!args.hasPhone) return persons;
 
 			const byPhone = (person) =>
-				args.phone === 'YES' ? person.phone : !person.phone;
+				args.hasPhone === 'YES' ? person.phone : !person.phone;
 
 			return persons.filter(byPhone);
 		},
