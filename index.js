@@ -1,161 +1,42 @@
-import { gql } from 'apollo-server';
-import { ApolloServer, UserInputError } from 'apollo-server';
-import { v4 } from 'uuid';
-import axios from 'axios';
+import { ApolloServer } from 'apollo-server';
+import { typeDefs } from './graphql/TypeDefs.js';
+import { resolvers } from './graphql/Resolvers.js';
+import jwt from 'jsonwebtoken';
+import 'dotenv/config';
 
-const typeDefs = gql`
-	enum YesNo {
-		YES
-		NO
-	}
+import { connectDB } from './configs/db.js';
+import User from './models/User.js';
 
-	type Address {
-		street: String!
-		city: String!
-	}
+const JWT_SECRET = process.env.JWT_SECRET || 'th151smy53cr3tw0rd';
 
-	type Person {
-		id: ID!
-		name: String!
-		age: Int!
-		phone: String
-		street: String!
-		address: Address!
-		canDrink: String!
-		check: String!
-		city: String
-	}
+const server = new ApolloServer({
+	typeDefs,
+	resolvers,
+	context: async ({ req }) => {
+		const auth = req ? req.headers.authorization : null;
 
-	type Query {
-		personCount: Int!
-		allPersons(hasPhone: YesNo): [Person]!
-		findPerson(name: String!): Person
-	}
+		if (auth && auth.toLowerCase().startsWith('bearer ')) {
+			const token = auth.substring(7);
+			const decodedUser = jwt.decode(token, JWT_SECRET);
 
-	type Mutation {
-		addPerson(
-			name: String!
-			age: Int!
-			phone: String
-			street: String!
-			city: String!
-		): Person!
-
-		editNumber(name: String!, phone: String!): Person!
-	}
-`;
-
-const resolvers = {
-	Query: {
-		personCount: async () => {
-			const { data: persons } = await axios.get(
-				'http://localhost:3000/persons'
-			);
-
-			return persons.length;
-		},
-		allPersons: async (root, args) => {
-			const { data: persons } = await axios.get(
-				'http://localhost:3000/persons'
-			);
-
-			const { hasPhone } = args;
-
-			if (!hasPhone) return persons;
-
-			const byPhone = (person) =>
-				hasPhone === 'YES' ? person.phone : !person.phone;
-
-			return persons.filter(byPhone);
-		},
-		findPerson: async (root, args) => {
-			const { name } = args;
-
-			const person = await axios
-				.get(`http://localhost:3000/persons?name=${name}`)
-				.then((res) => res.data[0])
-				.catch((err) => {
-					throw new UserInputError(err.message, {
-						invalidArgs: args,
-					});
-				});
-
-			return person;
-		},
-	},
-	Person: {
-		canDrink: (person) => {
-			return person.age >= 18 ? 'YES' : 'NOPE';
-		},
-		address: (person) => {
-			return {
-				street: person.street,
-				city: person.city,
-			};
-		},
-		check: () => 'LOL',
-	},
-	Mutation: {
-		addPerson: async (root, args) => {
-			const { name, age, phone, street, city } = args;
-
-			const person = await axios
-				.get(`http://localhost:3000/persons?name=${name}`)
-				.then((res) => res.data[0])
-				.catch((err) => {
-					throw new UserInputError(err.message, {
-						invalidArgs: args,
-					});
-				});
-
-			if (person) {
-				throw new UserInputError('The user already exist!', {
-					invalidArgs: name,
-				});
+			if (!decodedUser) {
+				return {};
+			} else {
+				const currentUser = await (
+					await User.findById(decodedUser.id)
+				).populate('friends');
+				return { currentUser };
 			}
-
-			const newPerson = {
-				id: v4(),
-				name,
-				age,
-				phone,
-				street,
-				city,
-			};
-
-			await axios.post('http://localhost:3000/persons', newPerson);
-
-			return newPerson;
-		},
-		editNumber: async (root, args) => {
-			const { name, phone } = args;
-			const { data: persons } = await axios.get(
-				'http://localhost:3000/persons'
-			);
-
-			const person = persons.find((person) => person.name === name);
-
-			if (!person) {
-				throw new UserInputError('Person not found', {
-					invalidArgs: name,
-				});
-			}
-
-			const updatedPerson = { ...person, phone };
-
-			await axios.put(`http://localhost:3000/persons/${person.id}/`, {
-				...person,
-				phone,
-			});
-			// persons[personIndex] = updatedPerson;
-
-			return updatedPerson;
-		},
+		}
 	},
-};
-
-const server = new ApolloServer({ typeDefs, resolvers });
-
-server.listen({ port: process.env.PORT || 5000 }).then(({ url }) => {
-	console.log(`🚀 Server ready at ${url}`);
 });
+
+server
+	.listen({ port: process.env.PORT || 5000 })
+	.then(({ url }) => {
+		console.log(`🚀 Server ready at ${url}`);
+		connectDB();
+	})
+	.catch((err) => {
+		console.error(err);
+	});
