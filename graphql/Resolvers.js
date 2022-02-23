@@ -41,10 +41,11 @@ export const resolvers = {
 	Mutation: {
 		addPerson: async (root, args, context) => {
 			const { currentUser } = context;
+			const { name, age, phone, street, city } = args;
 
 			if (!currentUser) throw new AuthenticationError('Not authenticated');
 
-			const newPerson = new Person({ ...args });
+			const newPerson = new Person({ name, age, phone, street, city });
 
 			try {
 				await newPerson.save();
