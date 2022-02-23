@@ -39,11 +39,8 @@ export const resolvers = {
 		check: () => 'LOL',
 	},
 	Mutation: {
-		addPerson: async (root, args, context) => {
-			const { currentUser } = context;
+		addPerson: async (root, args) => {
 			const { name, age, phone, street, city } = args;
-
-			if (!currentUser) throw new AuthenticationError('Not authenticated');
 
 			const newPerson = new Person({ name, age, phone, street, city });
 
