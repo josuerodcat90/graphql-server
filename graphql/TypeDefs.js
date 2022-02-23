@@ -50,6 +50,7 @@ export const typeDefs = gql`
 			street: String!
 			city: String!
 		): Person!
+		deletePerson(id: ID!): String!
 		editNumber(name: String!, phone: String!): Person!
 		createUser(username: String, password: String!, email: String!): User!
 		login(email: String!, password: String!): Token!

@@ -56,6 +56,27 @@ export const resolvers = {
 
 			return newPerson;
 		},
+		deletePerson: async (root, args, context) => {
+			const { currentUser } = context;
+
+			if (!currentUser) throw new AuthenticationError('Not authenticated');
+
+			const { id } = args;
+
+			let person = await Person.findById(id);
+
+			if (!person) throw new UserInputError('Person not found');
+
+			try {
+				await Person.findOneAndDelete({ _id: id });
+			} catch (error) {
+				throw new UserInputError(error.message, {
+					invalidArgs: args,
+				});
+			}
+
+			return `Person deleted successfully`;
+		},
 		editNumber: async (root, args) => {
 			const { name, phone } = args;
 			const person = await Person.findOne({ name });
